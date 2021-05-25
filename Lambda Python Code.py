@@ -1,4 +1,5 @@
 #Please update your JumpCloud API Key below
+#For each API request received from Snowflake which will have an array of USERNAMES, GROUPS associated in JUMPCLOUD will be returned as a response
 
 import json
 from botocore.vendored import requests
