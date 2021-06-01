@@ -36,34 +36,35 @@ select jumpcloud_user_groups(RESOURCE_NAME,max(EVENT_TIMESTAMP) as LAST_UPDATE_T
       group by RESOURCE_NAME;
                              
 -- Procedue to Grant Roles based on Groups
-create or replace procedure grant_previliges_jumpcloud_users() 
-  returns float not null
-  language javascript
-  EXECUTE AS CALLER
-  as     
+CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
+  RETURNS FLOAT NOT NULL 
+  LANGUAGE JAVASCRIPT
+  EXECUTE AS CALLER 
+  AS    
   $$ 
     var get_grant_commands = `select 'grant'||' role '||array_to_string(Groups, ', ')||' to user "'|| upper(User)||'"' as GRANT_COMMAND from
                           (select RESOURCE_NAME as User, jumpcloud_user_groups(RESOURCE_NAME) as Groups,max(EVENT_TIMESTAMP) as LAST_UPDATE_TIME
                               from table(snowflake.information_schema.rest_event_history(
                                   'scim',
-                                  dateadd('minutes',-90,current_timestamp()),
+                                  dateadd('minutes',-9000,current_timestamp()),
                                   current_timestamp(),
                                   200))
                                 where status='SUCCESS' and RESOURCE_NAME is not null
                                 group by RESOURCE_NAME
                            )`;
-    var grant_commands = snowflake.createStatement( {sqlText: get_grant_commands} );
-    var result_set1 = grant_commands.execute();
+    var grant_commands = snowflake.createStatement( {sqlText: get_grant_commands} ).execute();
+ 
     
-    // Loop through the results, processing one row at a time... 
-    while (result_set1.next())  {
-       var grant_command = snowflake.createStatement( {sqlText: result_set1.getColumnValue(1)} );
+    // Grant Roles to users one by one
+    while (grant_commands.next())  {
+       var grant_command = snowflake.createStatement( {sqlText: grant_commands.getColumnValue(1)} );
        grant_command.execute();
      
        }
-  return 1; // Replace with something more useful.
+  return 1;
   $$
   ;
+  
   
 call grant_previliges_jumpcloud_users();
 
