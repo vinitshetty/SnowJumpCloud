@@ -18,11 +18,12 @@ create external function jumpcloud_user_groups(v varchar)
 select jumpcloud_user_groups('david.li@awesome.com');
 
 -- Step-5 - Schedule a Proc to assign roles
+                      
 CREATE TASK task_assign_roles
-  WAREHOUSE = mywh
-  SCHEDULE = '1 hour'
+  WAREHOUSE = COMPUTE_WH
+  SCHEDULE = '60 minute'
 AS
-  CALL SP_ASSIGN_ROLES();
+  CALL grant_previliges_jumpcloud_users();
   
                              
 -- Procedue to Grant Roles based on Groups
@@ -57,9 +58,3 @@ CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
   ;
   
 
--- Schedule the TASK to run every hour                       
-CREATE TASK task_assign_roles
-  WAREHOUSE = COMPUTE_WH
-  SCHEDULE = '60 minute'
-AS
-  CALL grant_previliges_jumpcloud_users();
