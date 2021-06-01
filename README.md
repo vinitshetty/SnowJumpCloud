@@ -1,6 +1,9 @@
 # SnowJumpCloud
 Snowflake JumpCloud Integration
 
+Detailed Blog Article 
+https://datanerdshetty.wordpress.com/2021/06/01/jumpcloud-integration-with-snowflake/
+
 <!-- wp:paragraph -->
 <p>Current <em>JumpCloud</em> integration automatically creates/updates user information Snowflake and allows you to login using SSO. But compared to identity providers like <em>Okta</em> and <em>Azure Active Directory</em> JumpCloud doesn't automatically assign roles to users so that they can perform authorised actions on Snowflake. This means administrator has to manually grant access to specific ROLE on Snowflake side every time they make GROUP level changes on JumpCloud side. </p>
 <!-- /wp:paragraph -->
