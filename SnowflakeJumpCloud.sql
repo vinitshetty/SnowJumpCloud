@@ -24,16 +24,6 @@ CREATE TASK task_assign_roles
 AS
   CALL SP_ASSIGN_ROLES();
   
--- All changes to users on JumpCloud side will be available to Snowflake via JC Connector
-use schema snowflake.information_schema;
-select jumpcloud_user_groups(RESOURCE_NAME,max(EVENT_TIMESTAMP) as LAST_UPDATE_TIME
-    from table(rest_event_history(
-        'scim',
-        dateadd('minutes',-90,current_timestamp()),
-        current_timestamp(),
-        200))
-      where status='SUCCESS' and RESOURCE_NAME is not null
-      group by RESOURCE_NAME;
                              
 -- Procedue to Grant Roles based on Groups
 CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
@@ -42,6 +32,7 @@ CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
   EXECUTE AS CALLER 
   AS    
   $$ 
+    -- All changes to users on JumpCloud side will be available to Snowflake via JC Connector
     var get_grant_commands = `select 'grant'||' role '||array_to_string(Groups, ', ')||' to user "'|| upper(User)||'"' as GRANT_COMMAND from
                           (select RESOURCE_NAME as User, jumpcloud_user_groups(RESOURCE_NAME) as Groups,max(EVENT_TIMESTAMP) as LAST_UPDATE_TIME
                               from table(snowflake.information_schema.rest_event_history(
@@ -55,7 +46,7 @@ CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
     var grant_commands = snowflake.createStatement( {sqlText: get_grant_commands} ).execute();
  
     
-    // Grant Roles to users one by one
+    --Grant Roles to users one by one
     while (grant_commands.next())  {
        var grant_command = snowflake.createStatement( {sqlText: grant_commands.getColumnValue(1)} );
        grant_command.execute();
@@ -65,8 +56,6 @@ CREATE OR REPLACE PROCEDURE GRANT_PREVILIGES_JUMPCLOUD_USERS()
   $$
   ;
   
-  
-call grant_previliges_jumpcloud_users();
 
 -- Schedule the TASK to run every hour                       
 CREATE TASK task_assign_roles
